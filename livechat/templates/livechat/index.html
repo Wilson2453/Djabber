@@ -1,0 +1,29 @@
+{% extends "livechat/layout.html" %}
+{% load static %}
+
+{% block title %}Rooms{% endblock %}
+
+{% block body %}
+    {% if user.is_authenticated %}
+        <div class="text-center">
+            <h1 class="px-3 py-3 header">{{ user.username }}'s groups</h1>
+        </div>
+
+        {% for room in rooms %}
+            <div class="row">
+                <div class="col"></div>
+
+                <div class="col-7 px-3 py-3">
+                    <div class="p-4 django-green-bg shadow text-center custom-rounded" style="height: 135px;">
+                        <h2 class="mb-3 h2 text-white font-weight-bold">{{ room.name }}</h2>
+                        <a href="{% url 'room' room.slug %}" class="btn btn-success">Join</a>
+                    </div>
+                </div>
+                
+                <div class="col"></div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <h1>Logged out</h1>
+    {% endif %}
+{% endblock %}

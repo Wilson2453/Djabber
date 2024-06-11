@@ -1,0 +1,125 @@
+{% extends "livechat/layout.html" %}
+{% load static %}
+
+{% block title %}{{ room.name }}{% endblock %}
+
+{% block body %}
+    {% if user.is_authenticated %}
+        <div class="header">
+            <h1>Group: {{ room.name }}</h1>
+            {% if user.id == room.owner.id %}
+                <a href="{% url 'edit_room' room.slug %}" class="btn btn-secondary">Edit</a>
+            {% else %}
+                <a href="{% url 'leave_room' user.id room.id %}" class="btn btn-danger" 
+                    onclick="return confirm('Are you sure you want to leave this room?')">Leave group</a>
+            {% endif %}
+        </div>
+        <div class="container-lg mt-4 d-flex align-items-center justify-content-center">
+            <div class="card chat-window">
+                <div class="card-body" id="chat-messages" style="height: 500px; overflow-y: auto;">
+                {% for message in messages %}
+                    <div class="message {% if message.user.id == user.id %}sender{% else %}receiver{% endif %}">
+                        <p class="mb-0"> {{ message.user.username }}</p>
+                        <p> {{ message.content }}</p>
+                        <span class="small font-weight-normal"> • {{ message.date_added }}</span>
+                    </div>
+                {% endfor %}
+                </div>
+                <div class="card-footer">
+                    <form method="post" action="." class="d-flex">
+                        <input type="text" name="content" class="form-control flex-grow-1" placeholder="Your message..." id="chat-message-input" autofocus>
+                        <button class="btn btn-success ml-2" id="chat-message-submit">
+                            Submit
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <h1>Logged out</h1>
+    {% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+{{ room.slug|json_script:"json-roomname" }}
+{{ request.user.username|json_script:"json-username" }}
+
+<script>
+    const roomName = JSON.parse(document.getElementById('json-roomname').textContent);
+    const userName = JSON.parse(document.getElementById('json-username').textContent);
+
+    const chatSocket = new WebSocket(
+        'ws://' 
+        + window.location.host 
+        + '/ws/'
+        + roomName
+        + '/'
+    );
+
+    console.log('WebSocket URL:', 'ws://' + window.location.host + '/ws/' + roomName + '/');
+
+
+    chatSocket.onopen = function(e) {
+        console.log('WebSocket connection opened');
+    };
+
+
+    chatSocket.onmessage = function(e) {
+        console.log('onmessage');
+        // Display messages
+
+        const data = JSON.parse(e.data);
+
+        if (data.message) {
+            // Variables for DateTime
+            const currentDate = new Date();
+            const options = { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true };
+            const formattedDate = currentDate.toLocaleString('en-US', options);
+
+            let html = '<div class="message ' + (data.username === userName ? 'sender' : 'receiver') + '">';
+                html += '<p class="mb-0">' + data.username + '</p>';
+                html += '<p>' + data.message + '</p>';
+                html += '<span class="small font-weight-normal"> • ' + formattedDate + '</span>';
+                html += '</div>';
+            
+            document.querySelector('#chat-messages').innerHTML += html;
+
+            scrollToBottom();
+        } else {
+            alert('Empty message!');
+        }
+    };
+
+    chatSocket.onclose = function(e) {
+        console.log('onclose');
+    };
+
+    // Sending messages
+
+    document.querySelector("#chat-message-submit").onclick = function(e) {
+        e.preventDefault();
+
+        const messageInputDom = document.querySelector("#chat-message-input");
+        const message = messageInputDom.value;
+
+        chatSocket.send(JSON.stringify({
+            'message': message,
+            'username': userName,
+            'room': roomName,
+        }));
+
+        messageInputDom.value = '';
+
+        return false;
+    }
+
+
+    function scrollToBottom() {
+        const objDiv = document.querySelector('#chat-messages');
+        objDiv.scrollTop = objDiv.scrollHeight;
+    }
+
+    scrollToBottom();
+</script>
+{% endblock %}

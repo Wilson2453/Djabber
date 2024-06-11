@@ -1,0 +1,23 @@
+{% extends "livechat/layout.html" %}
+{% load static %}
+
+{% block body %}
+    <img src="{% static 'livechat/django.png' %}" class="mx-auto d-block mt-4" alt="Django chat" width="250" height="250">
+
+    {% if message %}
+        <div class="message-text">{{ message }}</div>
+    {% else %}
+        <h1 class="register">Login</h1>
+    {% endif %}
+
+    <form action="{% url 'login' %}" method="post" class="register">
+        {% csrf_token %}
+        <div class="form-group">
+            <input autofocus class="form-control mx-auto w-auto" type="text" name="username" placeholder="Username">
+        </div>
+        <div class="form-group">
+            <input class="form-control mx-auto w-auto" type="password" name="password" placeholder="Password">
+        </div>
+        <input class="btn btn-success btn-lg button-border" type="submit" value="Login">
+    </form>
+{% endblock %}

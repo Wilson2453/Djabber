@@ -1,0 +1,18 @@
+{% extends "livechat/layout.html" %}
+{% load static %}
+
+{% block title %}Rooms{% endblock %}
+
+{% block body %}
+    <img src="{% static 'livechat/django.png' %}" class="mx-auto d-block mt-4" alt="Django chat" width="250" height="250">
+    <div class="header">
+        {% if user.is_authenticated %}
+            <h1>Error</h1>
+            <h2>{{ message }}</h2>
+            <a class="btn btn-success" href="{% url 'index' %}">Home</a>
+        {% else %}
+            <h1>Logged out</h1>
+            <a class="btn btn-success" href="{% url 'index' %}">Home</a>
+        {% endif %}
+    </div>
+{% endblock %}
